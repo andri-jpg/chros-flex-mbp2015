@@ -1,26 +1,28 @@
-# Troubleshooting BCM43602
+# BCM43602 troubleshooting
 
-## Ambil log terlebih dahulu
+## Start with a report
 
-Masuk ke shell lokal ChromeOS dan jalankan:
+From a local ChromeOS shell, run:
 
 ```bash
 sudo /usr/local/sbin/mbp2015-wifi-diagnose | tee /tmp/wifi-report.txt
 ```
 
-Sebelum membagikan laporan, hapus SSID, MAC address, alamat IP, dan identifier
-pribadi lain.
+Remove SSIDs, MAC addresses, IP addresses, and other personal identifiers before
+posting the report.
 
-## Adapter tidak muncul
+## The adapter is missing
 
-Pastikan `lspci -nnk` menampilkan `14e4:43ba` dan `Kernel driver in use:
-brcmfmac`. Periksa `rfkill list`. Jika modul tidak ada atau probe menghasilkan
-unknown symbol, jangan memaksa modul distro lain; build ulang terhadap exact
-kernel Flex atau kembali ke modul bawaan.
+`lspci -nnk` should show device `14e4:43ba` with `brcmfmac` as the active driver.
+Also check `rfkill list`.
+
+If the module reports unknown symbols, do not install a module from another Linux
+distribution. Remove the custom module bundle or rebuild it against the exact Flex
+kernel source, configuration, and `Module.symvers`.
 
 ## Firmware load error `-2`
 
-Nama yang seharusnya tersedia:
+The modified rootfs should contain:
 
 ```text
 /lib/firmware/brcm/brcmfmac43602-pcie.bin
@@ -28,38 +30,39 @@ Nama yang seharusnya tersedia:
 /lib/firmware/brcm/brcmfmac43602-pcie.Apple Inc.-MacBookPro12,1.txt
 ```
 
-Jalankan `verify-image.sh` pada image, lalu pastikan USB memang ditulis dari file
-hasil build dan bukan image resmi yang lama.
+Run `verify-image.sh` against the image and confirm that the USB was written from
+the modified file rather than the original recovery image.
 
-## SSID terlihat tetapi autentikasi gagal
+## Networks appear, but authentication fails
 
-1. Uji WPA2-Personal/AES terlebih dahulu. Pisahkan WPA2 dan WPA3 selama diagnosis.
-2. Uji 2.4 GHz dan 5 GHz dengan SSID berbeda.
-3. Pastikan MAC pada file NVRAM sama dengan MAC hardware laptop.
-4. Hapus profil jaringan dan sambungkan ulang.
-5. Coba build dengan `--tuning none` untuk membandingkan efek `roamoff=1`.
+1. Start with WPA2-Personal/AES. Split WPA2 and WPA3 while testing.
+2. Give the 2.4 GHz and 5 GHz radios separate SSIDs and test both.
+3. Confirm that the NVRAM file contains the MacBook's hardware Wi-Fi address.
+4. Forget the saved network and reconnect.
+5. Compare against an image built with `--tuning none`.
 
-Jangan langsung mengubah `ccode`, `regrev`, SAR, atau power table. Nilai tersebut
-berhubungan dengan regulasi dan kalibrasi RF.
+Do not change `ccode`, `regrev`, SAR values, or power tables at random. They are
+part of the card's regulatory and RF calibration data.
 
-## Putus setelah sleep/resume
+## Wi-Fi disappears after sleep
 
-Kumpulkan dua laporan: sebelum suspend dan segera setelah resume. Cari pesan
-`bus is down`, timeout firmware, atau perangkat PCI yang hilang. Coba matikan dan
-nyalakan Wi-Fi dari UI. Workaround unload/reload driver hanya mungkin bila
-`brcmfmac` dibangun sebagai modul; jangan berasumsi driver selalu modular.
+Collect reports immediately before suspend and after resume. Look for firmware
+timeouts, `bus is down`, or a missing PCI device. Toggling Wi-Fi in the UI may
+recover the card temporarily.
 
-## Setelah update ChromeOS masalah kembali
+Driver unload/reload workarounds only apply when `brcmfmac` is a module. It may be
+built into a particular Flex kernel.
 
-Update A/B dapat mengaktifkan rootfs resmi baru tanpa firmware/NVRAM tambahan.
-Unduh release Flex terbaru, build ulang image, dan uji lagi. Project sengaja tidak
-mematikan update otomatis karena browser yang tidak terpatch adalah risiko yang
-lebih besar.
+## Wi-Fi breaks after a ChromeOS update
 
-## Image tidak boot
+An A/B update can activate a new official rootfs without the added firmware and
+NVRAM. Download the current recovery release, build a new image, and test it from
+USB again. This project does not disable ChromeOS updates.
 
-- Verifikasi ulang dengan `verify-image.sh`.
-- Tulis ulang USB dan cek checksum/storage media.
-- Coba build tanpa `--module-bundle`.
-- Pastikan `make_dev_ssd.sh` menyatakan setidaknya satu kernel berhasil di-resign.
-- Jangan instal ke internal disk sebelum mode **Try it first** berhasil stabil.
+## The USB image does not boot
+
+- Run `verify-image.sh` again.
+- Check the USB media and rewrite the image.
+- Try an image built without `--module-bundle`.
+- Check that `make_dev_ssd.sh` reported at least one successfully re-signed kernel.
+- Stay in **Try it first** mode until Wi-Fi and sleep/resume are stable.

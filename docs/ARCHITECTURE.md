@@ -1,57 +1,62 @@
-# Arsitektur pipeline
+# Architecture
 
-## Sumber artefak
+## Inputs
 
-| Artefak | Sumber | Perlakuan |
+| Input | Source | Handling |
 |---|---|---|
-| ChromeOS Flex | Manifest recovery resmi Google | URL dan SHA-1 dibaca dinamis |
-| Firmware STA BCM43602 | Repository `linux-firmware` | Diunduh saat build, ukuran dan SHA-256 dicatat |
-| NVRAM Apple | File lokal atau gist komunitas opt-in | MAC address wajib dipersonalisasi |
-| Vboot tools/dev keys | ROOT-A image input | Selalu seversi dengan image yang diproses |
-| Modul opsional | Exact ChromiumOS kernel tree | `vermagic` diverifikasi sebelum injeksi |
+| ChromeOS Flex | Google's official recovery manifest | URL and vendor SHA-1 are read at download time |
+| BCM43602 STA firmware | `linux-firmware` | Downloaded during the build; SHA-256 is logged |
+| Apple NVRAM | Local file or explicit community download | Personalized with the machine's Wi-Fi address |
+| vboot scripts and development keys | `ROOT-A` in the input image | Always taken from the release being modified |
+| Optional kernel modules | Exact ChromiumOS kernel build | Checked against the target kernel's `vermagic` |
 
-## Urutan build
+## Build flow
 
 ```text
-manifest Google -> ZIP terverifikasi -> image resmi
-                                        |
-                                        v
-                           salin ke output (input immutable)
-                                        |
-                     ekstrak make_dev_ssd + devkeys dari ROOT-A
-                                        |
-                       resign KERN-A/B + nonaktifkan dm-verity
-                                        |
-                  mount ROOT-A/B yang valid dan suntikkan artefak
-                                        |
-                      unmount + verifier read-only + image akhir
+Google recovery manifest -> verified archive -> official Flex image
+                                                   |
+                                      copy to a separate output
+                                                   |
+                              extract vboot tools from ROOT-A
+                                                   |
+                         re-sign KERN-A/B without dm-verity
+                                                   |
+                           mount each usable root partition
+                                                   |
+                     install firmware, NVRAM, and diagnostics
+                                                   |
+                           unmount and verify read-only
 ```
 
-ChromeOS memakai layout GPT dengan pasangan `KERN-A`/`ROOT-A` (partisi 2/3) dan
-`KERN-B`/`ROOT-B` (4/5). Recovery image bisa memiliki slot B yang kosong; script
-hanya memodifikasi filesystem ext yang benar-benar ada.
+ChromeOS uses paired kernel and root partitions: `KERN-A`/`ROOT-A` are partitions
+2 and 3; `KERN-B`/`ROOT-B` are partitions 4 and 5. Recovery images often carry a
+minimal or empty B root. The builder modifies only root partitions that contain a
+mountable ext filesystem.
 
-## Keputusan driver
+## Why firmware comes first
 
-ID PCI `14e4:43ba` dipetakan oleh driver kernel `brcmfmac` ke firmware
-`brcmfmac43602-pcie`. Karena driver sudah in-tree, firmware dan board/NVRAM data
-adalah lapisan pertama yang diperbaiki. Mengganti `.ko` meningkatkan risiko karena
-kernel ChromeOS mempunyai config, symbol CRC, toolchain, dan patchset sendiri.
+PCI ID `14e4:43ba` is supported by the in-tree `brcmfmac` driver and maps to
+`brcmfmac43602-pcie`. Replacing the driver is therefore unnecessary unless a
+specific kernel patch is being tested. Supplying current STA firmware and the
+correct Apple board data fixes the missing part while keeping the image's own
+driver ABI intact.
 
-Jalur modul opsional mengharuskan satu bundle dengan struktur:
+An optional module bundle must use this layout:
 
 ```text
 lib/modules/RELEASE/kernel/drivers/net/wireless/broadcom/brcm80211/*.ko
 ```
 
-Semua modul diperiksa dengan `modinfo -F vermagic`, disalin, lalu indeks modul
-dibangun ulang dengan `depmod` di rootfs target.
+Each module is checked with `modinfo -F vermagic` before it is copied. `depmod` is
+then run against the target rootfs.
 
-## Reproducibility dan supply chain
+## Integrity and traceability
 
-- Manifest hasil download disimpan berdampingan sebagai `IMAGE.bin.json`.
-- ZIP Google diverifikasi terhadap SHA-1 yang dipublikasikan manifest. SHA-1 di
-  sini berfungsi sebagai checksum vendor, bukan klaim ketahanan kriptografis baru.
-- Firmware dicatat SHA-256-nya di log build.
-- Image besar dan material berlisensi pihak ketiga dikecualikan dari Git.
-- CI hanya melakukan static shell analysis; hardware validation tetap manual.
+- The selected recovery-manifest entry is saved next to the downloaded image as
+  `IMAGE.bin.json`.
+- The recovery ZIP is checked against Google's published checksum. SHA-1 is used
+  here as the vendor-provided download checksum, not as a new security guarantee.
+- The firmware SHA-256 is printed in the build log.
+- Generated images, firmware, NVRAM data, and module binaries are ignored by Git.
+- CI covers shell analysis and small deterministic tests. Boot and radio behavior
+  still require the physical MacBook.
