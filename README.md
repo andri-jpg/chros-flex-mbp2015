@@ -27,7 +27,7 @@ eksperimental dan ditolak bila `vermagic` tidak cocok persis. Jangan memakai
 
 ## Kebutuhan
 
-- Linux native x86-64 (Ubuntu 22.04/24.04 disarankan; WSL dan macOS tidak didukung)
+- Linux native x86-64 atau WSL2 (Ubuntu 24.04; loop-device preflight sudah diuji)
 - ruang kosong minimal 25 GB
 - akses `sudo` dan loop device
 - `curl`, `jq`, `unzip`, `cgpt`, `futility`, `dump_kernel_config`, `losetup`,
@@ -37,11 +37,15 @@ Pada Ubuntu/Debian, nama paket umumnya:
 
 ```bash
 sudo apt update
-sudo apt install curl jq unzip cgpt vboot-kernel-utils vboot-utils \
+sudo apt install make curl jq unzip cgpt vboot-kernel-utils vboot-utils \
   e2fsprogs kmod pciutils rfkill shellcheck
 ```
 
 Script melakukan preflight dan akan menyebut command yang belum tersedia.
+Pada WSL2, clone dan build di filesystem Linux (`~/chros-flex-mbp2015`), bukan
+langsung di `/mnt/c` atau `/mnt/d`. Setelah image selesai, salin hasilnya ke
+Windows dan tulis USB dengan aplikasi raw-image Windows; USB flash drive tidak
+ditangani langsung oleh pipeline WSL.
 
 ## Quick start
 
