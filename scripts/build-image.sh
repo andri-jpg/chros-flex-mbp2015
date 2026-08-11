@@ -69,7 +69,10 @@ done
 sudo_prefix
 
 input=$(absolute_path "$input")
-mkdir -p "$(dirname "$output")"
+output_dir=$(dirname "$output")
+output_dir_created=0
+[[ -d $output_dir ]] || output_dir_created=1
+mkdir -p "$output_dir"
 output=$(absolute_path "$output")
 [[ $input != "$output" ]] || die "output must differ from input"
 work=$(mktemp -d)
@@ -175,4 +178,10 @@ done
 loop=''
 log "Verifying customized image"
 "${SUDO[@]}" "$SCRIPT_DIR/verify-image.sh" "$output"
+if [[ -n ${SUDO_UID:-} && -n ${SUDO_GID:-} ]]; then
+  chown "$SUDO_UID:$SUDO_GID" "$output"
+  if ((output_dir_created)); then
+    chown "$SUDO_UID:$SUDO_GID" "$(dirname "$output")"
+  fi
+fi
 log "Done: $output"
