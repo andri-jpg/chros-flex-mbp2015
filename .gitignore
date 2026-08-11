@@ -1,0 +1,9 @@
+/build/
+/downloads/
+/out/
+/local/
+*.bin
+*.bin.zip
+*.img
+*.log
+*.nvram.txt

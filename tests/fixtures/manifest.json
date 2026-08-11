@@ -1,0 +1,35 @@
+[
+  {
+    "name": "ChromeOS Flex",
+    "channel": "STABLE",
+    "version": "16600.1.0",
+    "chrome_version": "149.0.1.0",
+    "file": "old.bin",
+    "filesize": 10,
+    "zipfilesize": 5,
+    "sha1": "old",
+    "url": "https://example.invalid/old.zip"
+  },
+  {
+    "name": "ChromeOS Flex",
+    "channel": "BETA",
+    "version": "16800.1.0",
+    "chrome_version": "151.0.1.0",
+    "file": "beta.bin",
+    "filesize": 10,
+    "zipfilesize": 5,
+    "sha1": "beta",
+    "url": "https://example.invalid/beta.zip"
+  },
+  {
+    "name": "ChromeOS Flex",
+    "channel": "STABLE",
+    "version": "16700.60.0",
+    "chrome_version": "150.0.1.0",
+    "file": "new.bin",
+    "filesize": 10,
+    "zipfilesize": 5,
+    "sha1": "new",
+    "url": "https://example.invalid/new.zip"
+  }
+]
