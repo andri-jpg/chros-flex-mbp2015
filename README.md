@@ -15,7 +15,7 @@ module bundle is explicitly supplied.
 
 - Official stable Flex image discovery and checksum verification: working
 - Offline image modification under Ubuntu 24.04 and WSL2: working
-- Both ChromeOS kernel slots re-signed with the image's development keys
+- Both ChromeOS kernel slots re-signed with the image's USB recovery keys
 - Modified image passes the included GPT, kernel command-line, and firmware checks
 - Physical `MacBookPro12,1` testing: in progress
 
@@ -25,7 +25,7 @@ use, reconnects, and sleep/resume on your machine.
 ## What the build does
 
 1. Reads Google's recovery manifest and downloads the latest requested Flex channel.
-2. Uses `make_dev_ssd.sh` and development keys taken from that same image to remove
+2. Uses `make_dev_ssd.sh` and recovery keys taken from that same image to remove
    rootfs verification from `KERN-A` and `KERN-B`.
 3. Installs the BCM43602 STA firmware from `linux-firmware`.
 4. Installs a personalized Apple NVRAM file under both generic and DMI-specific names.
@@ -168,7 +168,7 @@ The builder checks every module's `vermagic` and refuses mismatched bundles.
 
 ## Caveats
 
-- Rootfs verification is disabled and the kernels are re-signed with development
+- Rootfs verification is disabled and the kernels are re-signed with USB recovery
   keys. The modified image no longer has Google's original verified-boot chain.
 - A ChromeOS A/B update can replace the modified rootfs. Rebuild from the newest
   Flex recovery image if Wi-Fi breaks after an update.

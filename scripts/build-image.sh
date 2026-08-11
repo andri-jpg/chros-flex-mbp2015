@@ -91,7 +91,7 @@ trap cleanup EXIT
 log "Copying base image (input is never modified)"
 cp --reflink=auto --sparse=always "$input" "$output"
 
-log "Extracting the image-matched ChromiumOS vboot tools and developer keys"
+log "Extracting the image-matched ChromiumOS vboot tools and USB recovery keys"
 loop=$("${SUDO[@]}" losetup --find --show --partscan --read-only "$output")
 root_a=$(partition_path "$loop" 3)
 "${SUDO[@]}" mount -o ro "$root_a" "$mount_dir"
@@ -113,7 +113,8 @@ log "Disabling dm-verity and making ROOT-A/ROOT-B writable"
 GPT=$(command -v cgpt) FUTILITY=$(command -v futility) \
   "${SUDO[@]}" "$work/vboot/make_dev_ssd.sh" \
   --remove_rootfs_verification --image "$output" --partitions '2 4' \
-  --keys "$work/vboot/devkeys" --backup_dir "$work/backups" --force
+  --keys "$work/vboot/devkeys" --backup_dir "$work/backups" \
+  --recovery_key --force
 
 firmware="$work/brcmfmac43602-pcie.bin"
 log "Downloading current BCM43602 STA firmware from linux-firmware"

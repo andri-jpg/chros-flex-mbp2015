@@ -7,7 +7,7 @@
 | ChromeOS Flex | Google's official recovery manifest | URL and vendor SHA-1 are read at download time |
 | BCM43602 STA firmware | `linux-firmware` | Downloaded during the build; SHA-256 is logged |
 | Apple NVRAM | Local file or explicit community download | Personalized with the machine's Wi-Fi address |
-| vboot scripts and development keys | `ROOT-A` in the input image | Always taken from the release being modified |
+| vboot scripts and USB recovery keys | `ROOT-A` in the input image | Always taken from the release being modified |
 | Optional kernel modules | Exact ChromiumOS kernel build | Checked against the target kernel's `vermagic` |
 
 ## Build flow
