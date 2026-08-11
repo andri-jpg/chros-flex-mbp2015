@@ -11,7 +11,7 @@ jobs:
   shellcheck:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check shell scripts
         run: shellcheck scripts/*.sh scripts/lib/*.sh tests/*.sh
       - name: Run unit tests
