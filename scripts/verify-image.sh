@@ -54,4 +54,15 @@ for root_number in 3 5; do
 done
 
 ((roots_checked > 0)) || die "no usable ROOT partition found"
+
+efi_part=$(partition_path "$loop" 12)
+if [[ -b $efi_part ]]; then
+  "${SUDO[@]}" mount -o ro "$efi_part" "$mount_dir"
+  grub_cfg="$mount_dir/efi/boot/grub.cfg"
+  [[ -f $grub_cfg ]] || die "EFI GRUB configuration not found"
+  grep -A1 'menuentry "local image A"' "$grub_cfg" | grep -q 'cros_debug' || \
+    die "local EFI boot path does not enable cros_debug"
+  "${SUDO[@]}" umount "$mount_dir"
+fi
+
 log "Image verification passed ($kernels_checked kernel, $roots_checked root partition(s))"

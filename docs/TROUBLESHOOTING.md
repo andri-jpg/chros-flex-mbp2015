@@ -65,4 +65,5 @@ USB again. This project does not disable ChromeOS updates.
 - Check the USB media and rewrite the image.
 - Try an image built without `--module-bundle`.
 - Check that `make_dev_ssd.sh` reported at least one successfully re-signed kernel.
+- On EFI systems, confirm the `local image A` GRUB entry contains `cros_debug`.
 - Stay in **Try it first** mode until Wi-Fi and sleep/resume are stable.

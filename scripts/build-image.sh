@@ -63,7 +63,7 @@ if [[ -n $nvram ]]; then
   valid_mac "$nvram_mac" || die "NVRAM macaddr is not a valid unicast address"
 fi
 
-for cmd in cgpt curl dump_kernel_config futility losetup mount umount blkid cp install sha256sum; do
+for cmd in cgpt curl dump_kernel_config futility losetup mount umount blkid cp install sed sha256sum; do
   need_cmd "$cmd"
 done
 sudo_prefix
@@ -115,6 +115,25 @@ GPT=$(command -v cgpt) FUTILITY=$(command -v futility) \
   --remove_rootfs_verification --image "$output" --partitions '2 4' \
   --keys "$work/vboot/devkeys" --backup_dir "$work/backups" \
   --recovery_key --force
+
+# On generic EFI systems, GRUB loads the unpacked kernel from the ESP instead of
+# the re-signed ChromeOS kernel partition. Mark that local/unverified boot path as
+# an intentional developer boot; otherwise ChromeOS may shut down during early
+# userspace initialization.
+log "Enabling cros_debug on the local EFI boot path"
+loop=$("${SUDO[@]}" losetup --find --show --partscan "$output")
+efi_part=$(partition_path "$loop" 12)
+"${SUDO[@]}" mount -o rw "$efi_part" "$mount_dir"
+grub_cfg="$mount_dir/efi/boot/grub.cfg"
+[[ -f $grub_cfg ]] || die "EFI GRUB configuration not found"
+"${SUDO[@]}" sed -i \
+  '/^[[:space:]]*linux /{/cros_debug/! s/ cros_efi/ cros_efi cros_debug/;}' \
+  "$grub_cfg"
+grep -A1 'menuentry "local image A"' "$grub_cfg" | grep -q 'cros_debug' || \
+  die "failed to enable cros_debug for local image A"
+"${SUDO[@]}" umount "$mount_dir"
+"${SUDO[@]}" losetup -d "$loop"
+loop=''
 
 firmware="$work/brcmfmac43602-pcie.bin"
 log "Downloading current BCM43602 STA firmware from linux-firmware"

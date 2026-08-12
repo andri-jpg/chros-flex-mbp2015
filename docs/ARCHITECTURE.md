@@ -21,6 +21,8 @@ Google recovery manifest -> verified archive -> official Flex image
                                                    |
                          re-sign KERN-A/B without dm-verity
                                                    |
+                         enable the local EFI developer path
+                                                   |
                            mount each usable root partition
                                                    |
                      install firmware, NVRAM, and diagnostics

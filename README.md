@@ -30,7 +30,8 @@ use, reconnects, and sleep/resume on your machine.
 3. Installs the BCM43602 STA firmware from `linux-firmware`.
 4. Installs a personalized Apple NVRAM file under both generic and DMI-specific names.
 5. Optionally sets `brcmfmac roamoff=1` to avoid firmware roaming-related disconnects.
-6. Checks the resulting image before returning it to the caller.
+6. Enables `cros_debug` for the local EFI boot path used by the writable rootfs.
+7. Checks the resulting image before returning it to the caller.
 
 The input image is never modified.
 
